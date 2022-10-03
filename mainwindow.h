@@ -16,9 +16,26 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 void paintEvent(QPaintEvent *e);
-QColor color=Qt::black;
+QColor color=Qt::white;
+QColor color_2=Qt::white;
+QColor color_3=Qt::white;
+bool button = false;
+int picked_x,picked_y,picked_z;
 private slots:
 void on_pushButton_clicked();
+
+void on_pushButton_3_clicked();
+
+void on_pushButton_4_clicked();
+
+void on_pushButton_5_clicked();
+
+void on_pushButton_6_clicked();
+
+void on_pushButton_7_clicked();
+
+void on_pushButton_8_clicked();
+
 
 private:
     Ui::MainWindow *ui;
