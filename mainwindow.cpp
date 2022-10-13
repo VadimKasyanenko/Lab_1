@@ -4,6 +4,8 @@
 #include <math.h>
 #include <string>
 #include <QMessageBox>
+#include <QDebug>
+#include <qmath.h>
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
@@ -43,7 +45,7 @@ void MainWindow::on_pushButton_clicked()
 
 //Other conversions
 //-------------------------------------------//
-double Lab_XYZ_function(double x)
+float Lab_XYZ_function(float x)
 {
     if(x>=0.008856)
     {
@@ -54,12 +56,29 @@ double Lab_XYZ_function(double x)
         return 7.787*x+16/116.0;
     }
 }
-void Lab_XYZ(double x,double y, double z)
+float L_LAB_XYZ(float x,float y, float z)
 {
-    double l,a,b;
-    l=116*Lab_XYZ_function(y/100.0)-16;
-    a=500*(Lab_XYZ_function(x/95.047)-Lab_XYZ_function(y/100.0));
-    b=200*(Lab_XYZ_function(y/100.0)-Lab_XYZ_function(z/108.883));
+    float l,a,b;
+    l=116*Lab_XYZ_function(y)-16;
+    a=500*(Lab_XYZ_function(x)-Lab_XYZ_function(y));
+    b=200*(Lab_XYZ_function(y)-Lab_XYZ_function(z));
+    return l;
+}
+float A_LAB_XYZ(float x,float y, float z)
+{
+    float l,a,b;
+    l=116*Lab_XYZ_function(y)-16;
+    a=500*(Lab_XYZ_function(x)-Lab_XYZ_function(y));
+    b=200*(Lab_XYZ_function(y)-Lab_XYZ_function(z));
+    return a;
+}
+float B_LAB_XYZ(double x,double y, double z)
+{
+    float l,a,b;
+    l=116*Lab_XYZ_function(y)-16;
+    a=500*(Lab_XYZ_function(x)-Lab_XYZ_function(y));
+    b=200*(Lab_XYZ_function(y)-Lab_XYZ_function(z));
+    return b;
 }
 double XYZ_Lab_function(double x)
 {
@@ -77,6 +96,52 @@ void XYZ_Lab(float l,float a, float b)
     l=XYZ_Lab_function((l+16)/116.0)*95.047;
     a=XYZ_Lab_function(a/500.0+(l+16)/116.0)*100;
     b=XYZ_Lab_function((l+16)/116.0-b/200.0)*108.883;
+
+}
+
+
+float XYZ_RGB_conv(float x){
+    if (x > 0.04045)
+    {
+        return qPow((x + 0.055) / 1.055, 2.4);
+    }
+    else return x / 12.92;
+}
+float X_XYZ_RGB(float r,float g,float b)
+{
+r/=255;
+g/=255;
+b/=255;
+    float Rn = XYZ_RGB_conv(r), Gn = XYZ_RGB_conv(g), Bn = XYZ_RGB_conv(b);
+    float X, Y, Z;
+    X = 0.412453 * Rn + 0.357580 * Gn + 0.180423 * Bn;
+    Y = 0.212671 * Rn + 0.715160 * Gn + 0.072169 * Bn;
+    Z = 0.019334 * Rn + 0.119193 * Gn + 0.950227 * Bn;
+  return X;
+}
+float Y_XYZ_RGB(float r,float g,float b)
+{
+    r/=255;
+    g/=255;
+    b/=255;
+    float Rn = XYZ_RGB_conv(r), Gn = XYZ_RGB_conv(g), Bn = XYZ_RGB_conv(b);
+    float X, Y, Z;
+    X = 0.412453 * Rn + 0.357580 * Gn + 0.180423 * Bn;
+    Y = 0.212671 * Rn + 0.715160 * Gn + 0.072169 * Bn;
+    Z = 0.019334 * Rn + 0.119193 * Gn + 0.950227 * Bn;
+  return Y;
+}
+float Z_XYZ_RGB(float r,float g,float b)
+{
+    r/=255;
+    g/=255;
+    b/=255;
+    float Rn = XYZ_RGB_conv(r), Gn = XYZ_RGB_conv(g), Bn = XYZ_RGB_conv(b);
+    float X, Y, Z;
+    X = 0.412453 * Rn + 0.357580 * Gn + 0.180423 * Bn;
+    Y = 0.212671 * Rn + 0.715160 * Gn + 0.072169 * Bn;
+    Z = 0.019334 * Rn + 0.119193 * Gn + 0.950227 * Bn;
+  return Z;
 
 }
 //-------------------------------------------//
@@ -153,18 +218,15 @@ QColor HSL_RGB(float r,float g, float b)
     CMax=std::max(std::max(r,g),b);
     CMin=std::min(std::min(r,g),b);
     l=(CMax+CMin)/2.0;
-    if(l==0 || CMax==CMin)
+    if(CMax==CMin)
     {
         s=0;
     }
-    else if(l>0 && l<=0.5)
+    else
     {
-        s = (CMax-CMin)/(2*l);
+        s = (CMax-CMin)/(1-abs(2*l-1));
     }
-    else if(l>0.5)
-    {
-        s = (CMax-CMin)/(2-2*l);
-    }
+
     if(CMax==CMin)
     {
         h=0;
@@ -230,49 +292,48 @@ QColor RGB_HSV(float h,float s,float v)
 {
     QColor col;
     float r,g,b;
-    h *=6;
-    float c = v*s;
-    float mod = h/2;
+    float M=255*v;
+    float m=M*(1-s);
+h*=360;
+
+    float mod = h/120;
     mod = mod - (int)mod;
-    float x= c*(1-(abs(mod -1)));
-    float m = v - c;
-    if (h>=0 || h<1)
-    {
-        r=c;
-        g=x;
-        b=0;
-    }
-    if (h>=1 || h<2)
-    {
-        r=x;
-        g=c;
-        b=0;
-    }
-    if (h>=2 || h<3)
-    {
-        r=0;
-        g=c;
-        b=x;
-    }
-    if (h>=3 || h<4)
-    {
-        r=0;
-        g=x;
-        b=c;
-    }
-    if (h>=4 || h<5)
-    {
-        r=x;
-        g=0;
-        b=c;
-    }
-    if (h>=5 || h<6)
-    {
-        r=c;
-        g=0;
-        b=x;
-    }
-    col.setRgbF(r+m,g+m,b+m);
+
+  float  z=(M-m)*(1-abs(2*mod-1));
+  r=M;
+  g=z+m;
+  b=m;
+  if(h>=60 && h<120)
+  {
+      r=z+m;
+      g=M;
+      b=m;
+  }
+ else if(h>=120 && h<180)
+  {
+      r=m;
+      g=M;
+      b=z+m;
+  }
+  else if(h>=180 && h<240)
+  {
+      r=m;
+      g=z+m;
+      b=M;
+  }
+ else if(h>=240 && h<300)
+  {
+      r=z+m;
+      g=m;
+      b=M;
+  }
+ else if(h>=300 && h<360)
+  {
+      r=M;
+      g=m;
+      b=z+m;
+  }
+    col.setRgb(r,g,b);
     return col;
 }
 //-------------------------------------------//
@@ -285,51 +346,51 @@ QColor RGB_HSL(float h,float s,float l)
 {
     QColor col;
     float r,g,b;
-    h *=6;
-    float c = ((1-abs(2*l-1))*s);
-    float mod = h/2;
+    h*=360;
+    float mod = h/120;
     mod = mod - (int)mod;
-    float x= c*(1-(abs(mod -1)));
-    float m = l - c/2;
-    if (h>=0 || h<1)
-    {
-        r=c;
-        g=x;
-        b=0;
-    }
-    if (h>=1 || h<2)
-    {
-        r=x;
-        g=c;
-        b=0;
-    }
-    if (h>=2 || h<3)
-    {
-        r=0;
-        g=c;
-        b=x;
-    }
-    if (h>=3 || h<4)
-    {
-        r=0;
-        g=x;
-        b=c;
-    }
-    if (h>=4 || h<5)
-    {
-        r=x;
-        g=0;
-        b=c;
-    }
-    if (h>=5 || h<6)
-    {
-        r=c;
-        g=0;
-        b=x;
-    }
-    col.setRgbF(r+m,g+m,b+m);
+float c= (1-abs(2*l-1))*s;
+  float  x=c*(1-abs(2*mod-1));
+  float m = l - c/2;
+  if (h>=0 && h<60){
+  r=c;
+  g=x;
+  b=0;
+  }
+  else if(h>=60 && h<120)
+  {
+      r=x;
+      g=c;
+      b=0;
+  }
+ else if(h>=120 && h<=180)
+  {
+      r=0;
+      g=c;
+      b=x;
+  }
+  else if(h>=180 && h<=240)
+  {
+      r=0;
+      g=x;
+      b=c;
+  }
+ else if(h>=240 && h<=300)
+  {
+      r=x;
+      g=0;
+      b=c;
+  }
+ else if(h>=300 && h<=360)
+  {
+      r=c;
+      g=0;
+      b=x;
+  }
+    col.setRgb(255*(r+m),255*(g+m),255*(b+m));
     return col;
 }
+
 QColor HSV_HSL(float h,float s, float l)
 {
     QColor col;
@@ -374,11 +435,11 @@ QColor RGB_XYZ(float x,float y, float z)
 //-------------------------------------------//
 
 
+
 //LAB to other colors
 //-------------------------------------------//
 QColor RGB_LAB(float l,float a,float b){
     QColor col;
-   // XYZ_Lab(&l,&a,&b);
     float x,y,z;
     y=XYZ_Lab_function((l+16)/116.0)*95.047;
     x=XYZ_Lab_function(a/500.0+(l+16)/116.0)*100;
@@ -387,7 +448,6 @@ QColor RGB_LAB(float l,float a,float b){
     return col;
 }
 //-------------------------------------------//
-
 
 
 void MainWindow::on_pushButton_3_clicked()//from rgb
@@ -401,12 +461,16 @@ void MainWindow::on_pushButton_3_clicked()//from rgb
     y = str.toInt();
     str = ui->lineEdit_3->text();
     z = str.toInt();
+
     }
     else {
         x=picked_x;
         y=picked_y;
         z=picked_z;
         button = false;
+        ui->lineEdit->setText(str.setNum(x));
+        ui->lineEdit_2->setText(str.setNum(y));
+        ui->lineEdit_3->setText(str.setNum(z));
     }
     if (x > 255 || y > 255 || z > 255 || x<0 || y<0 || z<0)
     {
@@ -418,6 +482,33 @@ void MainWindow::on_pushButton_3_clicked()//from rgb
         ui->label_28->setText("Out of range");
     }
     else{
+         QColor tmp;
+         QString filler;
+         tmp = HSV_RGB(x,y,z);
+         ui->lineEdit_9->setText(filler.setNum(tmp.hueF()));
+         ui->lineEdit_4->setText(filler.setNum(tmp.saturationF()));
+         ui->lineEdit_10->setText(filler.setNum(tmp.valueF()));
+         tmp = HSL_RGB(x,y,z);
+         qreal t,u,b;
+         tmp.getHslF(&t,&u,&b);
+         ui->lineEdit_11->setText(filler.setNum(t));
+         ui->lineEdit_12->setText(filler.setNum(u));
+         ui->lineEdit_13->setText(filler.setNum(b));
+
+         ui->lineEdit_14->setText(filler.setNum(X_XYZ_RGB(x,y,z)));
+         ui->lineEdit_15->setText(filler.setNum(Y_XYZ_RGB(x,y,z)));
+         ui->lineEdit_16->setText(filler.setNum(Z_XYZ_RGB(x,y,z)));
+
+         float o=X_XYZ_RGB(x,y,z),p=Y_XYZ_RGB(x,y,z),i=Z_XYZ_RGB(x,y,z);
+         ui->lineEdit_17->setText(filler.setNum(L_LAB_XYZ(o,p,i)));
+         ui->lineEdit_18->setText(filler.setNum(A_LAB_XYZ(o,p,i)));
+         ui->lineEdit_19->setText(filler.setNum(B_LAB_XYZ(o,p,i)));
+
+         tmp = CMYK_RGB(x,y,z);
+         ui->lineEdit_20->setText(filler.setNum(tmp.cyan()));
+         ui->lineEdit_21->setText(filler.setNum(tmp.magenta()));
+         ui->lineEdit_22->setText(filler.setNum(tmp.yellow()));
+         ui->lineEdit_23->setText(filler.setNum(tmp.black()));
     str = (ui->comboBox->currentText());
     if (str=="RGB")
     {
@@ -504,6 +595,32 @@ void MainWindow::on_pushButton_4_clicked()//from hsv
         ui->label_28->setText("Out of range");
     }
     else {
+        QColor tmp=RGB_HSV(h,s,v),converted;
+        QString filler;
+        ui->lineEdit->setText(filler.setNum(tmp.red()));
+        ui->lineEdit_2->setText(filler.setNum(tmp.green()));
+        ui->lineEdit_3->setText(filler.setNum(tmp.blue()));
+        converted = HSL_RGB(tmp.red(),tmp.green(),tmp.blue());
+        qreal t,u,b;
+        converted.getHslF(&t,&u,&b);
+        ui->lineEdit_11->setText(filler.setNum(t));
+        ui->lineEdit_12->setText(filler.setNum(u));
+        ui->lineEdit_13->setText(filler.setNum(b));
+
+        ui->lineEdit_14->setText(filler.setNum(X_XYZ_RGB(tmp.red(),tmp.green(),tmp.blue())));
+        ui->lineEdit_15->setText(filler.setNum(Y_XYZ_RGB(tmp.red(),tmp.green(),tmp.blue())));
+        ui->lineEdit_16->setText(filler.setNum(Z_XYZ_RGB(tmp.red(),tmp.green(),tmp.blue())));
+
+        float o=X_XYZ_RGB(tmp.red(),tmp.green(),tmp.blue()),p=Y_XYZ_RGB(tmp.red(),tmp.green(),tmp.blue()),i=Z_XYZ_RGB(tmp.red(),tmp.green(),tmp.blue());
+        ui->lineEdit_17->setText(filler.setNum(L_LAB_XYZ(o,p,i)));
+        ui->lineEdit_18->setText(filler.setNum(A_LAB_XYZ(o,p,i)));
+        ui->lineEdit_19->setText(filler.setNum(B_LAB_XYZ(o,p,i)));
+
+        converted = CMYK_RGB(tmp.red(),tmp.green(),tmp.blue());
+        ui->lineEdit_20->setText(filler.setNum(converted.cyan()));
+        ui->lineEdit_21->setText(filler.setNum(converted.magenta()));
+        ui->lineEdit_22->setText(filler.setNum(converted.yellow()));
+        ui->lineEdit_23->setText(filler.setNum(converted.black()));
     str = (ui->comboBox->currentText());
     if (str=="RGB")
     {
@@ -591,6 +708,30 @@ void MainWindow::on_pushButton_5_clicked()//from hsl
         ui->label_28->setText("Out of range");
     }
     else{
+        QColor tmp=RGB_HSL(h,s,l),converted;
+        QString filler;
+        ui->lineEdit->setText(filler.setNum(tmp.red()));
+        ui->lineEdit_2->setText(filler.setNum(tmp.green()));
+        ui->lineEdit_3->setText(filler.setNum(tmp.blue()));
+        converted = HSV_RGB(tmp.red(),tmp.green(),tmp.blue());
+        ui->lineEdit_9->setText(filler.setNum(converted.hueF()));
+        ui->lineEdit_4->setText(filler.setNum(converted.saturationF()));
+        ui->lineEdit_10->setText(filler.setNum(converted.valueF()));
+
+        ui->lineEdit_14->setText(filler.setNum(X_XYZ_RGB(tmp.red(),tmp.green(),tmp.blue())));
+        ui->lineEdit_15->setText(filler.setNum(Y_XYZ_RGB(tmp.red(),tmp.green(),tmp.blue())));
+        ui->lineEdit_16->setText(filler.setNum(Z_XYZ_RGB(tmp.red(),tmp.green(),tmp.blue())));
+
+        float o=X_XYZ_RGB(tmp.red(),tmp.green(),tmp.blue()),p=Y_XYZ_RGB(tmp.red(),tmp.green(),tmp.blue()),i=Z_XYZ_RGB(tmp.red(),tmp.green(),tmp.blue());
+        ui->lineEdit_17->setText(filler.setNum(L_LAB_XYZ(o,p,i)));
+        ui->lineEdit_18->setText(filler.setNum(A_LAB_XYZ(o,p,i)));
+        ui->lineEdit_19->setText(filler.setNum(B_LAB_XYZ(o,p,i)));
+
+        converted = CMYK_RGB(tmp.red(),tmp.green(),tmp.blue());
+        ui->lineEdit_20->setText(filler.setNum(converted.cyan()));
+        ui->lineEdit_21->setText(filler.setNum(converted.magenta()));
+        ui->lineEdit_22->setText(filler.setNum(converted.yellow()));
+        ui->lineEdit_23->setText(filler.setNum(converted.black()));
     str = (ui->comboBox->currentText());
     if (str=="RGB")
     {
@@ -677,6 +818,32 @@ void MainWindow::on_pushButton_6_clicked()//from xyz
         ui->label_28->setText("Out of range");
     }
     else{
+        QColor tmp=RGB_XYZ(x,y,z),converted;
+        QString filler;
+        ui->lineEdit->setText(filler.setNum(tmp.red()));
+        ui->lineEdit_2->setText(filler.setNum(tmp.green()));
+        ui->lineEdit_3->setText(filler.setNum(tmp.blue()));
+        converted = HSL_RGB(tmp.red(),tmp.green(),tmp.blue());
+        qreal t,u,b;
+        converted.getHslF(&t,&u,&b);
+        ui->lineEdit_11->setText(filler.setNum(t));
+        ui->lineEdit_12->setText(filler.setNum(u));
+        ui->lineEdit_13->setText(filler.setNum(b));
+        converted = HSV_RGB(tmp.red(),tmp.green(),tmp.blue());
+        ui->lineEdit_9->setText(filler.setNum(converted.hueF()));
+        ui->lineEdit_4->setText(filler.setNum(converted.saturationF()));
+        ui->lineEdit_10->setText(filler.setNum(converted.valueF()));
+
+        float o=X_XYZ_RGB(tmp.red(),tmp.green(),tmp.blue()),p=Y_XYZ_RGB(tmp.red(),tmp.green(),tmp.blue()),i=Z_XYZ_RGB(tmp.red(),tmp.green(),tmp.blue());
+        ui->lineEdit_17->setText(filler.setNum(L_LAB_XYZ(o,p,i)));
+        ui->lineEdit_18->setText(filler.setNum(A_LAB_XYZ(o,p,i)));
+        ui->lineEdit_19->setText(filler.setNum(B_LAB_XYZ(o,p,i)));
+
+        converted = CMYK_RGB(tmp.red(),tmp.green(),tmp.blue());
+        ui->lineEdit_20->setText(filler.setNum(converted.cyan()));
+        ui->lineEdit_21->setText(filler.setNum(converted.magenta()));
+        ui->lineEdit_22->setText(filler.setNum(converted.yellow()));
+        ui->lineEdit_23->setText(filler.setNum(converted.black()));
     str = (ui->comboBox->currentText());
     if (str=="RGB")
     {
@@ -753,7 +920,7 @@ void MainWindow::on_pushButton_7_clicked()//from lab
     a = str.toFloat();
     str = ui->lineEdit_19->text();
     b = str.toFloat();
-    if (l > 0 || a > -128 || b > -128 || l<100 || a<128 || b<128)
+    if (l < 0 || a < -128 || b < -128 || l>100 || a>128 || b>128)
     {
         color.setRgb(255,255,255);
         ui->label_26->setText("Out of range");
@@ -763,6 +930,30 @@ void MainWindow::on_pushButton_7_clicked()//from lab
         ui->label_28->setText("Out of range");
     }
     else {
+        QColor tmp=RGB_LAB(l,a,b),converted;
+        QString filler;
+        ui->lineEdit->setText(filler.setNum(tmp.red()));
+        ui->lineEdit_2->setText(filler.setNum(tmp.green()));
+        ui->lineEdit_3->setText(filler.setNum(tmp.blue()));
+        converted = HSL_RGB(tmp.red(),tmp.green(),tmp.blue());
+        qreal t,u,b;
+        converted.getHslF(&t,&u,&b);
+        ui->lineEdit_11->setText(filler.setNum(t));
+        ui->lineEdit_12->setText(filler.setNum(u));
+        ui->lineEdit_13->setText(filler.setNum(b));
+        converted = HSV_RGB(tmp.red(),tmp.green(),tmp.blue());
+        ui->lineEdit_9->setText(filler.setNum(converted.hueF()));
+        ui->lineEdit_4->setText(filler.setNum(converted.saturationF()));
+        ui->lineEdit_10->setText(filler.setNum(converted.valueF()));
+
+        ui->lineEdit_14->setText(filler.setNum(X_XYZ_RGB(tmp.red(),tmp.green(),tmp.blue())));
+        ui->lineEdit_15->setText(filler.setNum(Y_XYZ_RGB(tmp.red(),tmp.green(),tmp.blue())));
+        ui->lineEdit_16->setText(filler.setNum(Z_XYZ_RGB(tmp.red(),tmp.green(),tmp.blue())));
+        converted = CMYK_RGB(tmp.red(),tmp.green(),tmp.blue());
+        ui->lineEdit_20->setText(filler.setNum(converted.cyan()));
+        ui->lineEdit_21->setText(filler.setNum(converted.magenta()));
+        ui->lineEdit_22->setText(filler.setNum(converted.yellow()));
+        ui->lineEdit_23->setText(filler.setNum(converted.black()));
     str = (ui->comboBox->currentText());
     if (str=="RGB")
     {
@@ -851,6 +1042,31 @@ void MainWindow::on_pushButton_8_clicked()//from cmyk
         ui->label_28->setText("Out of range");
     }
     else{
+        QColor tmp=RGB_CMYK(c,m,y,k),converted;
+        QString filler;
+        ui->lineEdit->setText(filler.setNum(tmp.red()));
+        ui->lineEdit_2->setText(filler.setNum(tmp.green()));
+        ui->lineEdit_3->setText(filler.setNum(tmp.blue()));
+        converted = HSL_RGB(tmp.red(),tmp.green(),tmp.blue());
+        qreal t,u,b;
+        converted.getHslF(&t,&u,&b);
+        ui->lineEdit_11->setText(filler.setNum(t));
+        ui->lineEdit_12->setText(filler.setNum(u));
+        ui->lineEdit_13->setText(filler.setNum(b));
+        converted = HSV_RGB(tmp.red(),tmp.green(),tmp.blue());
+        ui->lineEdit_9->setText(filler.setNum(converted.hueF()));
+        ui->lineEdit_4->setText(filler.setNum(converted.saturationF()));
+        ui->lineEdit_10->setText(filler.setNum(converted.valueF()));
+        converted = HSV_RGB(tmp.red(),tmp.green(),tmp.blue());
+        ui->lineEdit_14->setText(filler.setNum(converted.hueF()));
+        ui->lineEdit_15->setText(filler.setNum(converted.saturationF()));
+        ui->lineEdit_16->setText(filler.setNum(converted.valueF()));
+
+        float o=X_XYZ_RGB(tmp.red(),tmp.green(),tmp.blue()),p=Y_XYZ_RGB(tmp.red(),tmp.green(),tmp.blue()),i=Z_XYZ_RGB(tmp.red(),tmp.green(),tmp.blue());
+        ui->lineEdit_17->setText(filler.setNum(L_LAB_XYZ(o,p,i)));
+        ui->lineEdit_18->setText(filler.setNum(A_LAB_XYZ(o,p,i)));
+        ui->lineEdit_19->setText(filler.setNum(B_LAB_XYZ(o,p,i)));
+
     str = (ui->comboBox->currentText());
     if (str=="RGB")
     {
@@ -917,7 +1133,6 @@ void MainWindow::on_pushButton_8_clicked()//from cmyk
     }
     update();
 }
-
 void MainWindow::on_pushButton_2_clicked()
 {
     QMessageBox::information(this,"Information about conversions","RGB receive 3 values from 0 to 255 \n \n HSV recieve 3 values from 0.0 to 1.0 \n \n HSL recieve 3 values from 0.0 to 1.0 \n \n XYZ recieve 3 values from 0.0 to 1.0 \n \n Lab recieve L from 0 to 100 value and A B from -128 to 128 values \n \n CMYK recieve 4 values from 0 to 255 \n \n All colors are converted according to derived formulas");
