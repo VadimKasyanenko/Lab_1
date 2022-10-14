@@ -80,25 +80,6 @@ float B_LAB_XYZ(double x,double y, double z)
     b=200*(Lab_XYZ_function(y)-Lab_XYZ_function(z));
     return b;
 }
-double XYZ_Lab_function(double x)
-{
-    if(pow(x,3)>=0.008856)
-    {
-        return pow(x,3);
-    }
-    else
-    {
-        return (x-16/116.0)/7.787;
-    }
-}
-void XYZ_Lab(float l,float a, float b)
-{
-    l=XYZ_Lab_function((l+16)/116.0)*95.047;
-    a=XYZ_Lab_function(a/500.0+(l+16)/116.0)*100;
-    b=XYZ_Lab_function((l+16)/116.0-b/200.0)*108.883;
-
-}
-
 
 float XYZ_RGB_conv(float x){
     if (x > 0.04045)
@@ -438,6 +419,17 @@ QColor RGB_XYZ(float x,float y, float z)
 
 //LAB to other colors
 //-------------------------------------------//
+float XYZ_Lab_function(double x)
+{
+    if(pow(x,3)>=0.008856)
+    {
+        return pow(x,3);
+    }
+    else
+    {
+        return (x-16/116.0)/7.787;
+    }
+}
 QColor RGB_LAB(float l,float a,float b){
     QColor col;
     float x,y,z;
@@ -1136,4 +1128,28 @@ void MainWindow::on_pushButton_8_clicked()//from cmyk
 void MainWindow::on_pushButton_2_clicked()
 {
     QMessageBox::information(this,"Information about conversions","RGB receive 3 values from 0 to 255 \n \n HSV recieve 3 values from 0.0 to 1.0 \n \n HSL recieve 3 values from 0.0 to 1.0 \n \n XYZ recieve 3 values from 0.0 to 1.0 \n \n Lab recieve L from 0 to 100 value and A B from -128 to 128 values \n \n CMYK recieve 4 values from 0 to 255 \n \n All colors are converted according to derived formulas");
+}
+
+void MainWindow::on_pushButton_9_clicked()
+{
+    QString filler;
+    ui->lineEdit->setText(filler.setNum(0));
+    ui->lineEdit_2->setText(filler.setNum(0));
+    ui->lineEdit_3->setText(filler.setNum(0));
+    ui->lineEdit_9->setText(filler.setNum(0));
+    ui->lineEdit_4->setText(filler.setNum(0));
+    ui->lineEdit_10->setText(filler.setNum(0));
+    ui->lineEdit_11->setText(filler.setNum(0));
+    ui->lineEdit_12->setText(filler.setNum(0));
+    ui->lineEdit_13->setText(filler.setNum(0));
+    ui->lineEdit_14->setText(filler.setNum(0));
+    ui->lineEdit_15->setText(filler.setNum(0));
+    ui->lineEdit_16->setText(filler.setNum(0));
+    ui->lineEdit_17->setText(filler.setNum(0));
+    ui->lineEdit_18->setText(filler.setNum(0));
+    ui->lineEdit_19->setText(filler.setNum(0));
+    ui->lineEdit_20->setText(filler.setNum(0));
+    ui->lineEdit_21->setText(filler.setNum(0));
+    ui->lineEdit_22->setText(filler.setNum(0));
+    ui->lineEdit_23->setText(filler.setNum(0));
 }
