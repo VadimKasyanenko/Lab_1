@@ -1127,7 +1127,9 @@ void MainWindow::on_pushButton_8_clicked()//from cmyk
 }
 void MainWindow::on_pushButton_2_clicked()
 {
-    QMessageBox::information(this,"Information about conversions","RGB receive 3 values from 0 to 255 \n \n HSV recieve 3 values from 0.0 to 1.0 \n \n HSL recieve 3 values from 0.0 to 1.0 \n \n XYZ recieve 3 values from 0.0 to 1.0 \n \n Lab recieve L from 0 to 100 value and A B from -128 to 128 values \n \n CMYK recieve 4 values from 0 to 255 \n \n All colors are converted according to derived formulas");
+    QMessageBox::information(this,"Information about conversions","RGB receive 3 values from 0 to 255 \n \n HSV recieve 3 values from 0.0 to 1.0 \n \n"
+     " HSL recieve 3 values from 0.0 to 1.0 \n \n XYZ recieve 3 values from 0.0 to 1.0 \n \n Lab recieve L from 0 to 100 value and A B from -128 to 128 values \n \n"
+      " CMYK recieve 4 values from 0 to 255 \n \n All colors are converted according to derived formulas");
 }
 
 void MainWindow::on_pushButton_9_clicked()
